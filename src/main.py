@@ -3,9 +3,8 @@ import os
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-
 from core.reader import AetherisReader
+from utils.crypto import AetherisCrypto
 
 def main():
     print("=" * 60)
@@ -20,13 +19,21 @@ def main():
 
     try:
         engine = AetherisReader(file_path)
+        crypto = AetherisCrypto(file_path)
 
         file_fmt, description = engine.identify_format()
         stats = engine.get_basic_stats()
+        hashes = crypto.get_file_hashes()
 
         print(f"[*] Filename  : {stats['file_name']}")
         print(f"[+] Magic Type: {file_fmt} ({description})")
         print(f"[+] File Size : {stats['file_size']} bytes")
+
+        print("-" * 30)
+        print(f"[#] MD5       : {hashes.get('md5')}")
+        print(f"[#] SHA-1     : {hashes.get('sha1')}")
+        print(f"[#] SHA-256   : {hashes.get('sha256')}")
+        print("-" * 30)
 
         declared_ext = stats['extension'].replace('.', '')
         is_match = True
