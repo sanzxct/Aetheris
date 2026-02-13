@@ -19,11 +19,11 @@ class AetherisReader:
                     
                     if len(chunk) >=off + len(sig):
                         if chunk[off:off+len(sig)] == sig:
-                            return fmt, info['description']
+                            return fmt, info
 
-                return "UNKNOWN", "unknown binary format"
+                return "UNKNOWN", {"description": "Unknown Binary Format", "category": "NONE"}
         except Exception as e:
-            return "UNKNOWN", f"Error during analysis: {str(e)}"
+            return "ERROR", {"description": str(e), "category": "NONE"}
 
     def get_basic_stats(self):
         stats = os.stat(self.target_path)

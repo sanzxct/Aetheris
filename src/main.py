@@ -5,6 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.reader import AetherisReader
 from utils.crypto import AetherisCrypto
+from parsers.image import ImageMetadataParser
 
 def main():
     print("=" * 60)
@@ -21,11 +22,14 @@ def main():
         engine = AetherisReader(file_path)
         crypto = AetherisCrypto(file_path)
 
-        file_fmt, description = engine.identify_format()
+        file_fmt, info = engine.identify_format()
+        description = info.get('description')
+        category = info.get('category')
         stats = engine.get_basic_stats()
         hashes = crypto.get_file_hashes()
 
         print(f"[*] Filename  : {stats['file_name']}")
+        print(f"[*] Category  : {category}")
         print(f"[+] Magic Type: {file_fmt} ({description})")
         print(f"[+] File Size : {stats['file_size']} bytes")
 
@@ -37,12 +41,38 @@ def main():
 
         declared_ext = stats['extension'].replace('.', '')
         is_match = True
+
+
+        if category == "IMAGE":
+            print("[*] Extracting Image Metadata (EXIF)...")
+            img_parser = ImageMetadataParser(file_path)
+            exif = img_parser.extract_exif()
+
+            if exif and "error" not in exif:
+                count = 0 
+                for key, val in exif.items():
+                    if count < 10:
+                        print(f"    - {key}: {val}")
+                        cout+= 1
+                    if len(exif) > 10:
+                        print(f"    ... and {len(exif) - 10} more metadata items.")
+                    
+            elif "error" in exif:
+                print(f"    [!] {exif['error']}")
+
+            else:
+                print("    [!] No EXIF metadata found.")
+            print("-" * 40)
+
+        declared_ext = stats['extension'].replace('.','')
+        is_match = True
         
         if file_fmt != "UNKNOWN":
             is_match = (
                 (declared_ext == file_fmt) or 
                 (file_fmt == "JPEG" and declared_ext in ["JPG", "JPEG"]) or 
-                (file_fmt == "EXE_DLL" and declared_ext in ["EXE", "DLL"])
+                (file_fmt == "EXE_DLL" and declared_ext in ["EXE", "DLL"]) or
+                (file_fmt == "PNG" and declared_ext == "PNG")
             )
             
         if not is_match:
