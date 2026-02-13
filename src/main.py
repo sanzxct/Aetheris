@@ -49,17 +49,18 @@ def main():
             exif = img_parser.extract_exif()
 
             if exif and "error" not in exif:
-                count = 0 
-                for key, val in exif.items():
-                    if count < 10:
-                        print(f"    - {key}: {val}")
-                        cout+= 1
-                    if len(exif) > 10:
-                        print(f"    ... and {len(exif) - 10} more metadata items.")
-                    
+                max_display = 15
+                keys = list(exif.keys())
+
+                for key in keys[:max_display]:
+                    print(f"    - {key:20}: {exif[key]}")
+                
+                # PESAN INI HARUS DI LUAR FOR LOOP (Sejajar dengan for)
+                if len(keys) > max_display:
+                    print(f"    ... and {len(keys) - max_display} more metadata items.")
+            
             elif "error" in exif:
                 print(f"    [!] {exif['error']}")
-
             else:
                 print("    [!] No EXIF metadata found.")
             print("-" * 40)
