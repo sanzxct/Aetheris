@@ -48,7 +48,12 @@ def main():
                 max_display = 15
                 keys = list(exif.keys())
                 for key in keys[:max_display]:
+                    val = exif[key]
                     print(f"    - {key:20}: {exif[key]}")
+
+                    decoded = AetherisCrypto.quick_base64_decode(str(val))
+                    if decoded:
+                        print(f"      [!] Decoded Base64: {decoded}")
                 
                 if len(keys) > max_display:
                     print(f"    ... and {len(keys) - max_display} more metadata items.")
@@ -67,7 +72,12 @@ def main():
                 max_display = 15
                 keys = list(pdf_meta.keys())
                 for key in keys[:max_display]:
+                    val = pdf_meta[key]
                     print(f"    - {key:20}: {pdf_meta[key]}")
+
+                    decoded = AetherisCrypto.quick_base64_decode(str(val))
+                    if decoded:
+                        print(f"      [!] Decoded Base64: {decoded}")
                 
                 if len(keys) > max_display:
                     print(f"    ... and {len(keys) - max_display} more metadata items.")
@@ -86,7 +96,7 @@ def main():
                 (file_fmt == "JPEG" and declared_ext in ["JPG", "JPEG"]) or 
                 (file_fmt == "EXE_DLL" and declared_ext in ["EXE", "DLL"]) or
                 (file_fmt == "PNG" and declared_ext == "PNG") or
-                (file_fmt == "PDF" and declared_ext == "PDF") # Tambahkan pengecekan PDF
+                (file_fmt == "PDF" and declared_ext == "PDF")
             )
             
         if not is_match:

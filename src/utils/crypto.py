@@ -1,4 +1,6 @@
 import hashlib
+import base64
+import re
 
 class AetherisCrypto:
     def __init__(self, file_path):
@@ -31,3 +33,17 @@ class AetherisCrypto:
             return {
                 'error': str(e)
             }
+
+    @staticmethod
+    def quick_base64_decode(text):
+        pattern = r"^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+
+        if isinstance(text, str) and len(text) > 8 and re.match(pattern, text):
+            try:
+                decoded_bytes = base64.b64decode(text, validate=True)
+                return decoded_bytes.decode('utf-8')
+            
+            except :
+                return None
+
+        return None
