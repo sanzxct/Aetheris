@@ -1,11 +1,11 @@
 import sys
 import os 
 
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.reader import AetherisReader
 from utils.crypto import AetherisCrypto
 from parsers.image import ImageMetadataParser
+from parsers.document import PDFMetadataParser 
 
 def main():
     print("=" * 60)
@@ -39,10 +39,6 @@ def main():
         print(f"[#] SHA-256   : {hashes.get('sha256')}")
         print("-" * 30)
 
-        declared_ext = stats['extension'].replace('.', '')
-        is_match = True
-
-
         if category == "IMAGE":
             print("[*] Extracting Image Metadata (EXIF)...")
             img_parser = ImageMetadataParser(file_path)
@@ -51,18 +47,34 @@ def main():
             if exif and "error" not in exif:
                 max_display = 15
                 keys = list(exif.keys())
-
                 for key in keys[:max_display]:
                     print(f"    - {key:20}: {exif[key]}")
                 
-                # PESAN INI HARUS DI LUAR FOR LOOP (Sejajar dengan for)
                 if len(keys) > max_display:
                     print(f"    ... and {len(keys) - max_display} more metadata items.")
-            
             elif "error" in exif:
                 print(f"    [!] {exif['error']}")
             else:
                 print("    [!] No EXIF metadata found.")
+            print("-" * 40)
+
+        elif category == "DOCUMENT" and file_fmt == "PDF":
+            print("[*] Extracting PDF Metadata...")
+            doc_parser = PDFMetadataParser(file_path)
+            pdf_meta = doc_parser.extract_metadata()
+
+            if pdf_meta and "error" not in pdf_meta:
+                max_display = 15
+                keys = list(pdf_meta.keys())
+                for key in keys[:max_display]:
+                    print(f"    - {key:20}: {pdf_meta[key]}")
+                
+                if len(keys) > max_display:
+                    print(f"    ... and {len(keys) - max_display} more metadata items.")
+            elif "error" in pdf_meta:
+                print(f"    [!] {pdf_meta['error']}")
+            else:
+                print("    [!] No PDF metadata found.")
             print("-" * 40)
 
         declared_ext = stats['extension'].replace('.','')
@@ -73,12 +85,12 @@ def main():
                 (declared_ext == file_fmt) or 
                 (file_fmt == "JPEG" and declared_ext in ["JPG", "JPEG"]) or 
                 (file_fmt == "EXE_DLL" and declared_ext in ["EXE", "DLL"]) or
-                (file_fmt == "PNG" and declared_ext == "PNG")
+                (file_fmt == "PNG" and declared_ext == "PNG") or
+                (file_fmt == "PDF" and declared_ext == "PDF") # Tambahkan pengecekan PDF
             )
             
         if not is_match:
             print(f"[!] ALERT: Extension Mismatch! File is {file_fmt} but named .{declared_ext}")
-
 
     except Exception as e:
         print(f"[!] Critical Error: {e}")
