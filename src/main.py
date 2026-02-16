@@ -6,6 +6,7 @@ from core.reader import AetherisReader
 from utils.crypto import AetherisCrypto
 from parsers.image import ImageMetadataParser
 from parsers.document import PDFMetadataParser 
+from parsers.executable import ExecutableParser
 
 def main():
     print("=" * 60)
@@ -86,6 +87,24 @@ def main():
             else:
                 print("    [!] No PDF metadata found.")
             print("-" * 40)
+
+        elif category == "EXECUTABLE" and file_fmt == 'EXE_DLL':
+            print("[*] Performing Executable (PE) Analysis...")
+            exe_parser = ExecutableParser(file_path)
+            exe_meta = exe_parser.extract_pe_info()
+
+            if exe_meta and "error" not in exe_meta:
+                for key, val in exe_meta.items():
+                    if key == 'Sections':
+                        print(f"    - Sections (Entropy) :")
+                        for s in val:
+                            print(f"        -> {s}")
+                    else:
+                        print(f"    - {key:20}: {val}")
+            elif "error" in exe_meta:
+                print(f"    [!] {exe_meta['error']}")
+            print("-" * 40)
+
 
         declared_ext = stats['extension'].replace('.','')
         is_match = True
