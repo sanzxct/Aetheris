@@ -7,6 +7,7 @@ from utils.crypto import AetherisCrypto
 from parsers.image import ImageMetadataParser
 from parsers.document import PDFMetadataParser 
 from parsers.executable import ExecutableParser
+from parsers.strings import StringsExtractor
 
 def main():
     print("=" * 60)
@@ -101,6 +102,17 @@ def main():
                             print(f"        -> {s}")
                     else:
                         print(f"    - {key:20}: {val}")
+            print("[*] Extracting Interesting Strings (IoCs)...")
+            str_extractor = StringsExtractor(file_path)
+            ioc_results = str_extractor.extract_strings()
+
+            if ioc_results and "error" not in ioc_results:
+                if ioc_results['ips']:
+                    print(f"    - Found IPs   : {', '.join(ioc_results['ips'][:5])}")
+                if ioc_results['urls']:
+                    print(f"    - Found URLs  : {', '.join(ioc_results['urls'][:5])}")
+                if ioc_results['interesting_files']:
+                    print(f"    - Found Files : {', '.join(ioc_results['interesting_files'][:5])}")
             elif "error" in exe_meta:
                 print(f"    [!] {exe_meta['error']}")
             print("-" * 40)

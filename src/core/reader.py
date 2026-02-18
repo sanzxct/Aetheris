@@ -8,7 +8,6 @@ class AetherisReader:
             raise FileNotFoundError(f"Path not found: {target_path}")
 
     def identify_format(self):
-        """Analyze file using signature database with offset support."""
         try:
             with open(self.target_path, 'rb') as f:
                 chunk = f.read(64)

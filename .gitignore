@@ -19,5 +19,4 @@ dist/
 build/
 *.egg-info/
 
-# Local Samples (Opsional, jika kamu gamau upload gambar Naruto ke publik)
-# samples/*
+path/
