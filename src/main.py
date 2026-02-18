@@ -8,6 +8,7 @@ from parsers.image import ImageMetadataParser
 from parsers.document import PDFMetadataParser 
 from parsers.executable import ExecutableParser
 from parsers.strings import StringsExtractor
+from parsers.universal import UniversalParser
 
 def main():
     print("=" * 60)
@@ -23,6 +24,8 @@ def main():
     try:
         engine = AetherisReader(file_path)
         crypto = AetherisCrypto(file_path)
+        uni_parser = UniversalParser(file_path)
+        str_extractor = StringsExtractor(file_path)
 
         file_fmt, info = engine.identify_format()
         description = info.get('description')
@@ -41,6 +44,29 @@ def main():
         print(f"[#] SHA-256   : {hashes.get('sha256')}")
         print("-" * 30)
 
+        print("[*] System Metadata (OS Level):")
+        sys_meta = uni_parser.get_system_metadata()
+        if "error" not in sys_meta:
+            for k, v in sys_meta.items():
+                print(f"    - {k:20}: {v}")
+        else:
+            print(f"    [!] Could not retrieve system metadata: {sys_meta['error']}")
+        print("-" * 30)
+
+        print("[*] Extracting Strings & IoCs...")
+        ioc_results = str_extractor.extract_strings()
+        if ioc_results and "error" not in ioc_results:
+            if ioc_results['ips']:
+                print(f"    - Found IPs   : {', '.join(ioc_results['ips'][:5])}")
+            if ioc_results['urls']:
+                print(f"    - Found URLs  : {', '.join(ioc_results['urls'][:5])}")
+            if ioc_results['interesting_files']:
+                print(f"    - Found Files : {', '.join(ioc_results['interesting_files'][:5])}")
+            
+            if not any([ioc_results['ips'], ioc_results['urls'], ioc_results['interesting_files']]):
+                print("    [!] No interesting strings found.")
+        print("-" * 40)
+
         if category == "IMAGE":
             print("[*] Extracting Image Metadata (EXIF)...")
             img_parser = ImageMetadataParser(file_path)
@@ -52,17 +78,13 @@ def main():
                 for key in keys[:max_display]:
                     val = exif[key]
                     print(f"    - {key:20}: {exif[key]}")
-
                     decoded = AetherisCrypto.quick_base64_decode(str(val))
                     if decoded:
                         print(f"      [!] Decoded Base64: {decoded}")
-                
                 if len(keys) > max_display:
                     print(f"    ... and {len(keys) - max_display} more metadata items.")
             elif "error" in exif:
                 print(f"    [!] {exif['error']}")
-            else:
-                print("    [!] No EXIF metadata found.")
             print("-" * 40)
 
         elif category == "DOCUMENT" and file_fmt == "PDF":
@@ -76,17 +98,13 @@ def main():
                 for key in keys[:max_display]:
                     val = pdf_meta[key]
                     print(f"    - {key:20}: {pdf_meta[key]}")
-
                     decoded = AetherisCrypto.quick_base64_decode(str(val))
                     if decoded:
                         print(f"      [!] Decoded Base64: {decoded}")
-                
                 if len(keys) > max_display:
                     print(f"    ... and {len(keys) - max_display} more metadata items.")
             elif "error" in pdf_meta:
                 print(f"    [!] {pdf_meta['error']}")
-            else:
-                print("    [!] No PDF metadata found.")
             print("-" * 40)
 
         elif category == "EXECUTABLE" and file_fmt == 'EXE_DLL':
@@ -102,21 +120,9 @@ def main():
                             print(f"        -> {s}")
                     else:
                         print(f"    - {key:20}: {val}")
-            print("[*] Extracting Interesting Strings (IoCs)...")
-            str_extractor = StringsExtractor(file_path)
-            ioc_results = str_extractor.extract_strings()
-
-            if ioc_results and "error" not in ioc_results:
-                if ioc_results['ips']:
-                    print(f"    - Found IPs   : {', '.join(ioc_results['ips'][:5])}")
-                if ioc_results['urls']:
-                    print(f"    - Found URLs  : {', '.join(ioc_results['urls'][:5])}")
-                if ioc_results['interesting_files']:
-                    print(f"    - Found Files : {', '.join(ioc_results['interesting_files'][:5])}")
             elif "error" in exe_meta:
                 print(f"    [!] {exe_meta['error']}")
             print("-" * 40)
-
 
         declared_ext = stats['extension'].replace('.','')
         is_match = True
