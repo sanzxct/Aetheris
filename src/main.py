@@ -11,16 +11,13 @@ from parsers.strings import StringsExtractor
 from parsers.universal import UniversalParser
 from parsers.archive import ArchiveParser
 
-def main():
-    print("=" * 60)
-    print(" AETHERIS 1.0 ")
-    print("=" * 60)
-
-    if len(sys.argv) < 2:
-        print("[!] Usage: python3 main.py <target_file>")
+def analyze_file(file_path):
+    if os.path.isdir(file_path):
         return
 
-    file_path = sys.argv[1]
+    print("\n" + "=" * 80)
+    print(f" FILE: {os.path.basename(file_path).upper()}")
+    print("=" * 80)
 
     try:
         engine = AetherisReader(file_path)
@@ -34,119 +31,84 @@ def main():
         stats = engine.get_basic_stats()
         hashes = crypto.get_file_hashes()
 
-        print(f"[*] Filename  : {stats['file_name']}")
-        print(f"[*] Category  : {category}")
-        print(f"[+] Magic Type: {file_fmt} ({description})")
-        print(f"[+] File Size : {stats['file_size']} bytes")
+        print(f" [IDENTIFICATION]")
+        print(f"  - {'Category':15}: {category}")
+        print(f"  - {'Magic Type':15}: {file_fmt} ({description})")
+        print(f"  - {'File Size':15}: {stats['file_size']} bytes")
+        print(f"  - {'SHA-256':15}: {hashes.get('sha256')}")
+        print("-" * 40)
 
-        print("-" * 30)
-        print(f"[#] MD5       : {hashes.get('md5')}")
-        print(f"[#] SHA-1     : {hashes.get('sha1')}")
-        print(f"[#] SHA-256   : {hashes.get('sha256')}")
-        print("-" * 30)
-
-        print("[*] System Metadata (OS Level):")
+        print(f" [SYSTEM METADATA]")
         sys_meta = uni_parser.get_system_metadata()
         if "error" not in sys_meta:
             for k, v in sys_meta.items():
-                print(f"    - {k:20}: {v}")
+                print(f"  - {k:15}: {v}")
         else:
-            print(f"    [!] Could not retrieve system metadata: {sys_meta['error']}")
-        print("-" * 30)
+            print(f"  [!] {sys_meta['error']}")
+        print("-" * 40)
 
-        print("[*] Extracting Strings & IoCs...")
+        print(f" [STRINGS & IOCS]")
         ioc_results = str_extractor.extract_strings()
         if ioc_results and "error" not in ioc_results:
             if ioc_results['ips']:
-                print(f"    - Found IPs   : {', '.join(ioc_results['ips'][:5])}")
+                print(f"  - Found IPs   : {', '.join(ioc_results['ips'][:5])}")
             if ioc_results['urls']:
-                print(f"    - Found URLs  : {', '.join(ioc_results['urls'][:5])}")
+                print(f"  - Found URLs  : {', '.join(ioc_results['urls'][:5])}")
             if ioc_results['interesting_files']:
-                print(f"    - Found Files : {', '.join(ioc_results['interesting_files'][:5])}")
+                print(f"  - Found Files : {', '.join(ioc_results['interesting_files'][:5])}")
             
             if not any([ioc_results['ips'], ioc_results['urls'], ioc_results['interesting_files']]):
-                print("    [!] No interesting strings found.")
+                print("  [!] No interesting strings found.")
         print("-" * 40)
 
         if category == "IMAGE":
-            print("[*] Extracting Image Metadata (EXIF)...")
+            print(f" [IMAGE ANALYSIS]")
             img_parser = ImageMetadataParser(file_path)
             exif = img_parser.extract_exif()
-
             if exif and "error" not in exif:
-                max_display = 15
+                max_display = 10
                 keys = list(exif.keys())
                 for key in keys[:max_display]:
-                    val = exif[key]
-                    print(f"    - {key:20}: {exif[key]}")
-                    decoded = AetherisCrypto.quick_base64_decode(str(val))
-                    if decoded:
-                        print(f"      [!] Decoded Base64: {decoded}")
-                if len(keys) > max_display:
-                    print(f"    ... and {len(keys) - max_display} more metadata items.")
-            elif "error" in exif:
-                print(f"    [!] {exif['error']}")
+                    print(f"  - {key:15}: {exif[key]}")
             print("-" * 40)
 
         elif category == "DOCUMENT" and file_fmt == "PDF":
-            print("[*] Extracting PDF Metadata...")
+            print(f" [PDF ANALYSIS]")
             doc_parser = PDFMetadataParser(file_path)
             pdf_meta = doc_parser.extract_metadata()
-
             if pdf_meta and "error" not in pdf_meta:
-                max_display = 15
-                keys = list(pdf_meta.keys())
-                for key in keys[:max_display]:
-                    val = pdf_meta[key]
-                    print(f"    - {key:20}: {pdf_meta[key]}")
-                    decoded = AetherisCrypto.quick_base64_decode(str(val))
-                    if decoded:
-                        print(f"      [!] Decoded Base64: {decoded}")
-                if len(keys) > max_display:
-                    print(f"    ... and {len(keys) - max_display} more metadata items.")
-            elif "error" in pdf_meta:
-                print(f"    [!] {pdf_meta['error']}")
+                for key, val in list(pdf_meta.items())[:10]:
+                    print(f"  - {key:15}: {val}")
             print("-" * 40)
 
         elif category == "EXECUTABLE" and file_fmt == 'EXE_DLL':
-            print("[*] Performing Executable (PE) Analysis...")
+            print(f" [PE ANALYSIS]")
             exe_parser = ExecutableParser(file_path)
             exe_meta = exe_parser.extract_pe_info()
-
             if exe_meta and "error" not in exe_meta:
                 for key, val in exe_meta.items():
                     if key == 'Sections':
-                        print(f"    - Sections (Entropy) :")
+                        print(f"  - Sections (Entropy):")
                         for s in val:
-                            print(f"        -> {s}")
+                            print(f"    -> {s}")
                     else:
-                        print(f"    - {key:20}: {val}")
-            elif "error" in exe_meta:
-                print(f"    [!] {exe_meta['error']}")
+                        print(f"  - {key:15}: {val}")
             print("-" * 40)
 
         elif category == "ARCHIVE" and file_fmt == "ZIP":
-            print("[*] Inspecting Archive Contents (No Extraction)...")
+            print(f" [ARCHIVE ANALYSIS]")
             arc_parser = ArchiveParser(file_path)
             zip_contents = arc_parser.extract_zip_info()
-
             if isinstance(zip_contents, list):
-                print(f"    - Total Files Inside: {len(zip_contents)}")
+                print(f"  - Total Files : {len(zip_contents)}")
                 for item in zip_contents[:10]:
                     status = "[!]" if item['is_suspicious'] else "[+]"
-                    print(f"      {status} {item['filename']} ({item['file_size']} bytes)")
-                
-                if len(zip_contents) > 10:
-                    print(f"      ... and {len(zip_contents) - 10} more files.")
-        
+                    print(f"    {status} {item['filename']} ({item['file_size']} bytes)")
             elif isinstance(zip_contents, dict) and "error" in zip_contents:
-                print(f"    [!] Error: {zip_contents['error']}")
-                
+                print(f"  [!] {zip_contents['error']}")
             print("-" * 40)
 
         declared_ext = stats['extension'].replace('.','')
-        is_match = True
-        
         if file_fmt != "UNKNOWN":
             is_match = (
                 (declared_ext == file_fmt) or 
@@ -155,12 +117,35 @@ def main():
                 (file_fmt == "PNG" and declared_ext == "PNG") or
                 (file_fmt == "PDF" and declared_ext == "PDF")
             )
-            
-        if not is_match:
-            print(f"[!] ALERT: Extension Mismatch! File is {file_fmt} but named .{declared_ext}")
+            if not is_match:
+                print(f"\n [!] ALERT: Extension Mismatch! Real: {file_fmt} | Named: .{declared_ext}")
+
+        print("=" * 80)
 
     except Exception as e:
-        print(f"[!] Critical Error: {e}")
+        print(f" [!] Error analyzing {os.path.basename(file_path)}: {e}")
+
+def main():
+    if len(sys.argv) < 2:
+        print("[!] Usage: python3 main.py <target_file_or_folder>")
+        return
+
+    target = sys.argv[1]
+
+    print("\n" + "#" * 60)
+    print(" AETHERIS ENGINE 1.0")
+    print("#" * 60)
+
+    if os.path.isfile(target):
+        analyze_file(target)
+    elif os.path.isdir(target):
+        print(f"[*] Scanning Directory: {target}")
+        for filename in sorted(os.listdir(target)):
+            full_path = os.path.join(target, filename)
+            if os.path.isfile(full_path) and not filename.startswith('.'):
+                analyze_file(full_path)
+    else:
+        print(f"[!] Target not found: {target}")
 
 if __name__ == "__main__":
     main()
