@@ -14,7 +14,7 @@ FILE_SIGNATURES = {
     'MS_OFFICE_OLD': {'hex': b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1', 'offset': 0, 'description': 'MS Office Compound File (Doc/Xls/Ppt)', 'category': 'DOCUMENT'},
     
     # ARCHIVES
-    'ZIP':  {'hex': b'\x50\x4B\x03\x04', 'offset': 0, 'description': 'ZIP Archive / Modern MS Office', 'category': 'ARCHIVE'},
+    'ZIP':  {'hex': b'\x50\x4B\x03\x04', 'offset': 0, 'description': 'ZIP Compressed Archive / Modern MS Office', 'category': 'ARCHIVE'},
     'RAR_V4': {'hex': b'\x52\x61\x72\x21\x1A\x07\x00', 'offset': 0, 'description': 'RAR Archive v1.5+', 'category': 'ARCHIVE'},
     'RAR_V5': {'hex': b'\x52\x61\x72\x21\x1A\x07\x01\x00', 'offset': 0, 'description': 'RAR Archive v5.0+', 'category': 'ARCHIVE'},
     '7Z':   {'hex': b'\x37\x7A\xBC\xAF\x27\x1C', 'offset': 0, 'description': '7-Zip Compressed File', 'category': 'ARCHIVE'},

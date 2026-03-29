@@ -9,6 +9,7 @@ from parsers.document import PDFMetadataParser
 from parsers.executable import ExecutableParser
 from parsers.strings import StringsExtractor
 from parsers.universal import UniversalParser
+from parsers.archive import ArchiveParser
 
 def main():
     print("=" * 60)
@@ -122,6 +123,25 @@ def main():
                         print(f"    - {key:20}: {val}")
             elif "error" in exe_meta:
                 print(f"    [!] {exe_meta['error']}")
+            print("-" * 40)
+
+        elif category == "ARCHIVE" and file_fmt == "ZIP":
+            print("[*] Inspecting Archive Contents (No Extraction)...")
+            arc_parser = ArchiveParser(file_path)
+            zip_contents = arc_parser.extract_zip_info()
+
+            if isinstance(zip_contents, list):
+                print(f"    - Total Files Inside: {len(zip_contents)}")
+                for item in zip_contents[:10]:
+                    status = "[!]" if item['is_suspicious'] else "[+]"
+                    print(f"      {status} {item['filename']} ({item['file_size']} bytes)")
+                
+                if len(zip_contents) > 10:
+                    print(f"      ... and {len(zip_contents) - 10} more files.")
+        
+            elif isinstance(zip_contents, dict) and "error" in zip_contents:
+                print(f"    [!] Error: {zip_contents['error']}")
+                
             print("-" * 40)
 
         declared_ext = stats['extension'].replace('.','')
