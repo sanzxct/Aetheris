@@ -2,21 +2,21 @@ import unittest
 import os
 import sys
 
-# Menambahkan root folder Aetheris-Engine ke path
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
-# Import menggunakan path lengkap dari root
+
 from src.core.reader import AetherisReader
 from src.utils.crypto import AetherisCrypto
 
 class TestAetherisCore(unittest.TestCase):
     
     def setUp(self):
-        # Path ke file sampel
+       
         self.test_file = os.path.join(BASE_DIR, "samples", "putty.exe")
         
-        # Cek apakah file ada, jika tidak buat file dummy untuk testing
+        
         if not os.path.exists(self.test_file):
             os.makedirs(os.path.dirname(self.test_file), exist_ok=True)
             with open(self.test_file, "wb") as f:
